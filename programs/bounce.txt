@@ -1,18 +1,5 @@
-let x = 0
-let y = 0
-let z = 0
-
-let w = 0
-let h = 0
-let d = 0
-
-let bx = 0
-let by = 0
-let bz = 0
-
-let dx = 1
-let dy = 1
-let dz = 1
+let x = 0, y = 0, z = 0, w = 0, h = 0, d = 0
+let bx = 0, by = 0, bz = 0, dx = 1, dy = 1, dz = 1
 
 function tick() {
   World.setBlock(x + bx, y + by, z + bz, "air")

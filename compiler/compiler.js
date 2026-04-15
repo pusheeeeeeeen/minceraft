@@ -322,6 +322,17 @@ class Compiler {
         let loc = DataLocation.storage(names.classDataStorage, key)
         let [lines, expr] = prop.expr.intoStorage(loc, true)
         before.push(...lines)
+
+        let { storage } = expr.values
+        if (prop.writable && !storage.options.temporary) {
+          expr.values.storage = {
+            ...storage,
+            options: {
+              ...storage.options,
+              temporary: true
+            }
+          }
+        }
         prop.getExpr = expr.withType(prop.type)
       } else if (prop.value) {
         prop.getExpr = new Expression(prop.type, { compileTimeValue: prop.value })
@@ -858,21 +869,26 @@ class Compiler {
   }
 
   compileVariable(ast) {
-    if (this.env.getOwnVar(ast.name)) {
-      throw new error.ReferenceError(`Variable name '${ast.name}' is already declared in the current scope`)
+    let lines = []
+
+    for (let decl of ast.decls) {
+      if (this.env.getOwnVar(decl.name)) {
+        throw new error.ReferenceError(`Variable name '${decl.name}' is already declared in the current scope`)
+      }
+
+      let type = decl.dataType ? this.compileType(decl.dataType, "Variable type cannot be potentially void") : null,
+          value = this.compileExpression(decl.value)
+
+      if (type && !value.type.isSubtypeOf(type)) {
+        throw new error.TypeError(`Cannot assign value of type '${value.type.asString()}' to variable '${decl.name}: ${type.asString()}'`)
+      }
+
+      let [before, expression] = value.asPermanent(ast.const)
+      this.env.registerVar(decl.name, type, expression, ast.const)
+      if (before) lines.push(...before)
     }
 
-    let type = ast.dataType ? this.compileType(ast.dataType, "Variable type cannot be potentially void") : null,
-        value = this.compileExpression(ast.value)
-
-    if (type && !value.type.isSubtypeOf(type)) {
-      throw new error.TypeError(`Cannot assign value of type '${value.type.asString()}' to variable '${ast.name}: ${type.asString()}'`)
-    }
-
-    // TODO remove isPermanent()
-    let [before, expression] = value.asPermanent(ast.const)
-    this.env.registerVar(ast.name, type, expression, ast.const)
-    return before
+    return lines
   }
 
   compileIf(ast) {

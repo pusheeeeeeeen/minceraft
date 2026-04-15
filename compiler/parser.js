@@ -492,12 +492,20 @@ class Parser {
   }
 
   parseVariable(isConst = false) {
+    let decls = []
+
+    do {
+      decls.push({
+        name: this.expectType("identifier", "expected an identifier for variable name").value,
+        dataType: this.nextIf("operator", ":") ? this.parseType() : null,
+        value: this.nextIf("operator", "=") ? this.parseExpression() : null
+      })
+    } while (this.nextIf("punctuation", ","))
+
     return {
       type: "variable",
       const: isConst,
-      name: this.expectType("identifier", "expected an identifier for variable name").value,
-      dataType: this.nextIf("operator", ":") ? this.parseType() : null,
-      value: this.nextIf("operator", "=") ? this.parseExpression() : { type: "null" }
+      decls
     }
   }
 

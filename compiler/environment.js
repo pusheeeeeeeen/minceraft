@@ -19,6 +19,18 @@ class Environment {
     if (value instanceof Expression) {
       // re-create expression with correct type
       exprValues = value.values
+      if (!isConst) {
+        for (let i in exprValues) {
+          let val = exprValues[i]
+          exprValues[i] = {
+            ...val,
+            options: {
+              ...val.options,
+              temporary: true
+            }
+          }
+        }
+      }
       location = exprValues.storage?.location || exprValues.score?.location
       if (!location) {
         // TODO create location and return lines to move value to that location?
