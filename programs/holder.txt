@@ -1,0 +1,24 @@
+class Holder<T> {
+  x: T
+
+  set(val: T) {
+    this.x = val
+  }
+
+  get(): T {
+    return this.x
+  }
+}
+
+let h = new Holder<string>()
+
+function get(): string {
+  return h.get()
+}
+
+function set(x: string) {
+  h.set(x)
+}
+
+#bind("test:get", get)
+#bind("test:set", set)

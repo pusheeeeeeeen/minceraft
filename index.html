@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>minceraft</title>
+    <link rel="stylesheet" href="style.css" type="text/css">
+  </head>
+  <body>
+    <main>
+      <div id="top">
+        <div id="left">
+          <div class="controls">
+            <button id="compile">compile</button>
+            <div class="nav-spacer"></div>
+            <button id="download">download</button>
+          </div>
+          <div id="editor">
+            <textarea id="input" spellcheck="false"></textarea>
+          </div>
+        </div>
+        <div id="right">
+          <div class="resize"></div>
+          <div id="output">
+            <div id="files"></div>
+          </div>
+        </div>
+      </div>
+      <div id="bottom">
+        <div class="resize"></div>
+        <div id="console"></div>
+      </div>
+    </main>
+    <div id="resize-cover"></div>
+  </body>
+  <script src="jszip.min.js"></script>
+  <script src="coloring.js"></script>
+  <script src="nbt.js"></script>
+  <script src="comp-directives.js"></script>
+  <script src="data-location.js"></script>
+  <script src="compiled-expression.js"></script>
+  <script src="compiler.js"></script>
+  <script src="constants.js"></script>
+  <script src="defaults.js"></script>
+  <script src="downloader.js"></script>
+  <script src="editor.js"></script>
+  <script src="environment.js"></script>
+  <script src="error.js"></script>
+  <script src="expression.js"></script>
+  <script src="lexer.js"></script>
+  <script src="parser.js"></script>
+  <script src="type.js"></script>
+  <script src="value.js"></script>
+</html>

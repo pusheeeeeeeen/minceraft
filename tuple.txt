@@ -1,0 +1,26 @@
+
+type A = [string, +int, string]
+
+0: string
+1: int
+2: int | string
+3+: int | string | null
+
+-1: string
+-2: int
+-3: int | string
+-4+: int | string | null
+
+
+
+type B = [string, 2+ int]
+
+0: string
+1+: int
+3+: int | null
+
+-1: int
+-2: int
+-3: int | string
+-4+: int | string | null
+
