@@ -33,10 +33,6 @@ body {
   color: white;
 }
 
-button {
-  font-size: 12px;
-}
-
 main {
   display: flex;
   flex-direction: column;
@@ -59,9 +55,7 @@ main {
 .resize {
   --thickness: 16px;
   background: var(--bg-light);
-}
-.resize:active {
-  background: var(--bg-accent);
+  &:active { background: var(--bg-accent); }
 }
 
 #resize-cover {
@@ -69,12 +63,10 @@ main {
   inset: 0;
   z-index: 99999;
   display: none;
-}
-#resize-cover.resizing {
-  display: block;
+  &.resizing { display: block; }
 }
 
-.controls {
+#controls {
   background: var(--bg);
   border-bottom: 1px solid var(--border-light);
   height: 30px;
@@ -82,6 +74,53 @@ main {
   align-items: center;
   gap: 10px;
   padding: 0 16px;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow-x: auto;
+  &::-webkit-scrollbar { display: none; }
+
+  button {
+    background: transparent;
+    border: none;
+    padding: 4px;
+    margin: -4px;
+    color: var(--accent);
+
+    &:hover:not(:active) {
+      filter: brightness(1.15);
+    }
+  }
+}
+
+#file-controls {
+  font-size: 11px;
+
+  label, input::placeholder {
+    color: #aaa;
+  }
+
+  select, input {
+    appearance: none;
+    color: #ddd;
+    background: none;
+    padding: 2px 3px;
+    margin-left: -2px;
+    border: 1px dotted var(--border-light);
+    border-radius: 0;
+  }
+
+  &:not(.show-name) > #new-file-name,
+  &.show-name > :not(#new-file-name) {
+    display: none;
+  }
+}
+
+.nav-spacer {
+  background: var(--border-light);
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 /* editor */
@@ -90,23 +129,7 @@ main {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-}
-
-.controls button {
-  background: transparent;
-  border: none;
-  padding: 0;
-  color: var(--accent);
-}
-.controls button:hover:not(:active) {
-  filter: brightness(1.15);
-}
-
-.nav-spacer {
-  background: var(--border-light);
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
+  min-width: 0;
 }
 
 #editor {
@@ -128,12 +151,12 @@ main {
 
 #right {
   display: flex;
-}
 
-#right .resize {
-  width: var(--thickness);
-  border-left: 1px solid var(--border-light);
-  cursor: col-resize;
+  .resize {
+    width: var(--thickness);
+    border-left: 1px solid var(--border-light);
+    cursor: col-resize;
+  }
 }
 
 #output {
@@ -142,7 +165,7 @@ main {
   overflow-y: auto;
 }
 
-#files {
+#functions {
   padding-top: 10px;
   white-space: pre-wrap;
 }
@@ -177,23 +200,22 @@ summary {
 .console-msg {
   padding: 4px 8px;
   white-space: pre-wrap;
-}
-.console-msg:hover {
-  background: #fff1;
-}
-.error {
-  color: tomato;
-}
-.warn {
-  color: gold;
-}
-.problem {
-  color: #f22;
-  background: #f002;
-  text-shadow: 0 1px 2px #0006;
-}
-.problem:hover {
-  background: #f113;
+
+  &:hover {
+    background: #fff1;
+  }
+
+  &.warn { color: gold; }
+  &.error { color: tomato; }
+  &.problem {
+    color: #f22;
+    background: #f002;
+    text-shadow: 0 1px 2px #0006;
+
+    &:hover {
+      background: #f113;
+    }
+  }
 }
 
 /* console */
@@ -203,12 +225,14 @@ summary {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
+
+  .resize {
+    border-top: 1px solid var(--border-light);
+    height: var(--thickness);
+    cursor: row-resize;
+  }
 }
-#bottom .resize {
-  border-top: 1px solid var(--border-light);
-  height: var(--thickness);
-  cursor: row-resize;
-}
+
 #console {
   flex-shrink: 0;
   height: 0;

@@ -1,13 +1,91 @@
 function id(id) { return document.getElementById(id) }
 function query(q) { return document.querySelector(q) }
 
-const input = id("input"),
-      fileOutput = id("files"),
-      outputOuter = id("output"),
-      outputResizer = query("#right .resize"),
-      consoleOuter = id("console"),
-      consoleResizer = query("#bottom .resize"),
-      resizePageCover = id("resize-cover")
+const input = id("input")
+
+// FILES
+
+const fileControls = id("file-controls"), fileSelect = id("file-select"), newFileNameInput = id("new-file-name")
+
+let files, currentFile
+
+function setCurrentFile(name = null) {
+  name ??= files.keys().next().value
+
+  currentFile = name
+  localStorage.setItem("current-file", name)
+
+  fileSelect.value = name
+  input.value = files.get(name)
+  input.focus()
+}
+
+function saveFiles() {
+  localStorage.setItem("files", JSON.stringify([...files.entries()]))
+}
+
+function updateFileSelect() {
+  fileSelect.innerHTML = ""
+
+  for (let name of files.keys()) {
+    let option = document.createElement("option")
+    option.innerText = name
+    fileSelect.append(option)
+  }
+}
+
+try {
+  currentFile = localStorage.getItem("current-file")
+  files = new Map(JSON.parse(localStorage.getItem("files")))
+} catch {
+  files = new Map()
+}
+if (!files.size) files.set("file 1", "")
+updateFileSelect()
+setCurrentFile(files.has(currentFile) ? currentFile : null)
+
+fileSelect.oninput = e => {
+  setCurrentFile(e.target.value)
+}
+
+id("file-add").onclick = () => {
+  fileControls.classList.add("show-name")
+  newFileNameInput.focus()
+}
+
+id("file-remove").onclick = () => {
+  if (confirm(`Are you sure you want to delete file '${currentFile}'?`)) {
+    files.delete(currentFile)
+    if (!files.size) files.set("file 1", "")
+    updateFileSelect()
+    saveFiles()
+    setCurrentFile()
+  }
+}
+
+newFileNameInput.onkeydown = e => {
+  if (e.code === "Enter") {
+    let name = e.target.value.trim().replace(/\s+/g, " ")
+    if (!name) return
+
+    e.target.value = ""
+    if (!files.has(name)) {
+      files.set(name, "")
+      updateFileSelect()
+      saveFiles()
+    }
+    setCurrentFile(name)
+  } else if (e.code !== "Escape") return // <-- bad code warning
+
+  e.preventDefault()
+  fileControls.classList.remove("show-name")
+}
+
+// RESIZING
+
+const resizePageCover = id("resize-cover")
+const outputOuter = id("output"), outputResizer = query("#right .resize")
+const consoleOuter = id("console"), consoleResizer = query("#bottom .resize")
 
 function snapResize(size, min, max) {
   return size < min / 2 ? 0 : Math.min(max, Math.max(size, min))
@@ -46,19 +124,26 @@ onmouseup = () => {
   resizePageCover.classList.remove("resizing")
 }
 
+// EDITOR
+
+const functionOutput = id("functions")
+
+let saveDebounce
+
 input.oninput = () => {
-  localStorage.setItem("code", input.value)
+  clearTimeout(saveDebounce)
+  saveDebounce = setTimeout(() => {
+    files.set(currentFile, input.value)
+    saveFiles()
+  }, 300)
+
   compiled = null
 }
-
-input.value = localStorage.getItem("code") || ""
 
 let projectName = "TEST"
 
 id("compile").onclick = compile
 id("download").onclick = download
-
-let path = (location.origin + location.pathname).slice(0, -"index.html".length)
 
 let compiled = null
 
@@ -80,7 +165,7 @@ function compile() {
       consoleError(e.constructor.name, e.message)
       console.log(e)
     } else {
-      consoleProblem(`${e.line}:${e.column || "?"} ${e}\n\n${e.stack.replaceAll(path, "")}`)
+      consoleProblem(`${e.line}:${e.column || "?"} ${e}\n\n${e.stack.replace(/https?:\/\/\S+\//g, "")}`)
     }
 
     return
@@ -88,7 +173,7 @@ function compile() {
 
   let end = performance.now()
 
-  fileOutput.innerHTML = ""
+  functionOutput.innerHTML = ""
 
   for (let id in compiled.functions) {
     let details = document.createElement("details")
@@ -98,7 +183,7 @@ function compile() {
     details.innerHTML = `<summary>${id.replace(names.namespace, "<span style = 'opacity: 0.5'>&lt;internal&gt;</span>")}</summary><div class = "content"></div>`
 
     details.querySelector(".content").append(...compiled.functions[id].split("\n").map(colorCommand))
-    fileOutput.append(details)
+    functionOutput.append(details)
   }
 
   if (outputOuter.offsetWidth < 400) {
@@ -107,6 +192,8 @@ function compile() {
 
   consoleLog(`Code compiled successfully (${Math.round(end - start)}ms)`)
 }
+
+// CONSOLE
 
 const consoleElem = id("console")
 
@@ -147,7 +234,7 @@ function download() {
   downloadDatapack(names.name, compiled)
 }
 
-// debugging
+// DEBUG
 
 function _type(str) {
   if (!compiler) {

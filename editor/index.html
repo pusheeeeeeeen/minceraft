@@ -9,19 +9,27 @@
     <main>
       <div id="top">
         <div id="left">
-          <div class="controls">
+          <div id="controls">
             <button id="compile">compile</button>
             <div class="nav-spacer"></div>
             <button id="download">download</button>
+            <div class="nav-spacer"></div>
+            <div id="file-controls">
+              <label for="file-select">file:</label>
+              <select id="file-select"></select>
+              <button id="file-add">+</button>
+              <button id="file-remove">-</button>
+              <input id="new-file-name" placeholder="new file name...">
+            </div>
           </div>
           <div id="editor">
-            <textarea id="input" spellcheck="false"></textarea>
+            <textarea id="input" spellcheck="false" autocomplete="off"></textarea>
           </div>
         </div>
         <div id="right">
           <div class="resize"></div>
           <div id="output">
-            <div id="files"></div>
+            <div id="functions"></div>
           </div>
         </div>
       </div>
