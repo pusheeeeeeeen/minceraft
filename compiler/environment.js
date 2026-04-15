@@ -19,7 +19,7 @@ class Environment {
     if (value instanceof Expression) {
       // re-create expression with correct type
       exprValues = value.values
-      location = exprValues.storage.location || exprValues.score.location
+      location = exprValues.storage?.location || exprValues.score?.location
       if (!location) {
         // TODO create location and return lines to move value to that location?
         throw new Error("Environment.registerVar() called with expression value without a location")
@@ -59,14 +59,14 @@ class Environment {
     let expr = variable.value
 
     if (!this.isSameStack(variable)) {
-      let { compileTimeValue, storage } = expr.values
+      let { storage } = expr.values
 
-      if (!compileTimeValue && !storage?.location.path.startsWith("s[-1]")) {
+      if (storage && !storage.location.path.startsWith("s[-1]")) {
         throw new Error("terrible global var hack is borked")
       }
 
       return new Expression(expr.type, {
-        compileTimeValue,
+        ...expr.values,
         storage: storage && {
           location: this.getVarLocation(variable),
           options: storage.options
@@ -77,7 +77,7 @@ class Environment {
 
   // jank continued...
   getVarLocation(variable, forceGlobal = null) {
-    if (forceGlobal ?? !this.isSameStack(variable)) {
+    if ((forceGlobal ?? !this.isSameStack(variable)) && variable.location.target === "storage") {
       return DataLocation.storage(variable.location.namespace, variable.location.path.replace("s[-1]", "s[0]"))
     } else return variable.location
   }

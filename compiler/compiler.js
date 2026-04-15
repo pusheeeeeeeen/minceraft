@@ -645,6 +645,7 @@ class Compiler {
       class: idGenerator(true),
       staticProp: idGenerator(),
       stack: idGenerator(),
+      scoreboard: idGenerator(),
       func: idGenerator(),
       dynamicGetFunc: idGenerator(),
       anonGeneric: idGenerator(true)
@@ -652,8 +653,8 @@ class Compiler {
 
     this.tempStorageLoc = DataLocation.storage(names.miscStorage, "t")
 
-    this.tempScoreboardLoc = this.scoreboardLocation(names.tempScoreboardName)
-    this.tempScoreboardLoc2 = this.scoreboardLocation(names.tempScoreboardName2)
+    this.tempScoreboardLoc = this.scoreboardLoc(names.tempScoreboardName)
+    this.tempScoreboardLoc2 = this.scoreboardLoc(names.tempScoreboardName2)
 
     this.functionReturnLoc = DataLocation.storage(names.miscStorage, "r")
     this.byteArrayLoc = DataLocation.storage(names.miscStorage, "ba")
@@ -680,7 +681,11 @@ class Compiler {
     let defaultsSetupLines = setupDefaults(this)
     setupCompDirectives(this)
 
-    let mainFunc = this.registerFunctionAsString(this.compileBlock(ast, { global: true }), "_main")
+    let mainFunc = this.registerFunctionAsString(this.compileBlock(ast, {
+      global: true,
+      functionContext: { noRecurse: true },
+      advanceStack: false
+    }), "_main")
 
     this.registerFunction([
       ...this.loadFuncBefore(),
@@ -697,12 +702,12 @@ class Compiler {
     }
   }
 
-  stackLocation(id = null) {
-    return DataLocation.storage(names.stackStorage, `s[-1].${id || this.id.stack()}`)
+  storageLoc(id = null) {
+    return DataLocation.storage(names.stackStorage, `s[-1].${id ?? this.id.stack()}`)
   }
 
-  scoreboardLocation(name) {
-    return DataLocation.score(names.scoreboard, name)
+  scoreboardLoc(name = null) {
+    return DataLocation.score(names.scoreboard, name ?? this.id.scoreboard())
   }
 
   instanceFieldLoc(key, shared = false, pointer = null) {
@@ -713,17 +718,6 @@ class Compiler {
 
   functionArgLoc(outsideScope, index = null) {
     return DataLocation.storage(names.stackStorage, `s[${outsideScope ? -1 : -2}]._a${index !== null ? `[${index}]` : ""}`)
-  }
-
-  #freeStorageLocations = []
-  storageLoc() {
-    if (this.#freeStorageLocations.length) {
-      return this.#freeStorageLocations.pop()
-    }
-
-    let loc = this.stackLocation()
-    loc.free = () => this.#freeStorageLocations.push(loc)
-    return loc
   }
 
   #tempArrayDataLoc
@@ -762,7 +756,7 @@ class Compiler {
   functionContext = null
   currentFuncHasScope = false
 
-  compileBlock(statements, { global = false, advanceStack = false, functionContext = null, vars = {}, info = null } = {}) {
+  compileBlock(statements, { global = false, functionContext = null, advanceStack = !!functionContext, vars = {}, info = null } = {}) {
     // TODO closures (probably like java) - for now just prevent accessing vars outside function scope
     this.newEnv(advanceStack)
     if (global) this.globalEnv = this.env
@@ -971,7 +965,6 @@ class Compiler {
 
     this.registerFunction(this.compileBlock(ast.body, {
       info: `${ast.name}()`,
-      advanceStack: true,
       functionContext: { returnType },
       vars: Object.fromEntries(paramNames.map((name, i) => [
         name,
@@ -1086,7 +1079,6 @@ class Compiler {
         initFunctions.push(() => this.registerFunction(
           this.compileBlock(prop.body, {
             info: `${prop.static ? "static " : ""}${ast.name}.${prop.name}()`,
-            advanceStack: true,
             functionContext: { returnType },
             vars: Object.fromEntries(paramNames.map((name, i) => [
               name,
@@ -1478,8 +1470,6 @@ class Compiler {
         Compiler.join`execute store success score ${this.tempScoreboardLoc} run data modify ${loc} set ${right.asExtendedDataString()}`
       )
 
-      loc.free()
-
       // TODO treat all number sizes the same
       return new Expression(
         new ClassType(this.lang.Boolean),
@@ -1525,8 +1515,6 @@ class Compiler {
     let rightAsScore = right.asScoreString()
     let leftLoc = rightAsScore.location.eq(this.tempScoreboardLoc) ? this.tempScoreboardLoc2 : this.tempScoreboardLoc
     let leftAsScore = leftStorage.asScoreString(leftLoc)
-
-    if (allocLeftLoc) storageLoc.free()
 
     if (this.BASIC_MATH_OPERATORS.has(operator)) {
       return new Expression(

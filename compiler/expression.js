@@ -231,9 +231,11 @@ class Expression {
     if (includeCompileTimeValue && this.isCompileTime()) {
       values.compileTimeValue = this.values.compileTimeValue
     } else if (!done) {
-      values.storage = this.#intoStorageObj(compiler.storageLoc())
-      before = values.storage.options?.before
-      delete values.storage.options
+      if (compiler.functionContext?.noRecurse && this.isScoreboardCompatible()) {
+        ({ options: { before } = {}, ...values.score } = this.#intoScoreObj(compiler.scoreboardLoc()))
+      } else {
+        ({ options: { before } = {}, ...values.storage } = this.#intoStorageObj(compiler.storageLoc()))
+      }
     }
 
     return [before, new Expression(this.type, values)]
@@ -414,8 +416,8 @@ class Expression {
   }
 
   // e.g. "storage a:b c"
-  asDataString(loc = null, forcePermanent = false) {
-    let storage = !forcePermanent && this.values.storage || this.#intoStorageObj(loc || compiler.storageLoc())
+  asDataString(loc = null) {
+    let storage = !loc && this.values.storage || this.#intoStorageObj(loc || compiler.storageLoc())
     return this.#compiledFromObj(storage)
   }
 
@@ -444,7 +446,7 @@ class Expression {
 
   // e.g. "name compiler.vars"
   asScoreString(loc = null) {
-    let score = this.values.score || this.#intoScoreObj(loc || compiler.tempScoreboardLoc)
+    let score = !loc && this.values.score || this.#intoScoreObj(loc || compiler.tempScoreboardLoc)
     if (!this.values.score && !loc) {
       score.options.temporary = true
     }
