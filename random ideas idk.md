@@ -27,6 +27,15 @@ only set nbt value if the existing value is something specific
 data modify storage a {a:1}.a set value 2
 ```
 
+need to test if
+```
+data modify storage ... set compute entity @... {type: score, target: {type: context, target: target_entity}, score: <objective>}
+```
+is faster than
+```
+execute store result storage ... run scoreboard players get @... <objective>
+```
+
 ***
 
 ### actually useful

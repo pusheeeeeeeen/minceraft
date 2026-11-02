@@ -284,6 +284,7 @@ class ClassType extends Type {
     } else if (type instanceof IntersectionType) {
       return type.types.every(x => this.isSubtypeOf(x))
     } else if (type instanceof TupleType) {
+      // TODO dubious
       return this.instanceOf === compiler.lang.Array
           && !type.minLength
           && this.generics[0].isSubtypeOf(type.middleTypeUnion)
@@ -385,9 +386,8 @@ class ClassType extends Type {
       return name ? `${restStr}${name}: ${typeStr}` : restStr + typeStr
     }).join(", ")
 
-    return forceParens || this.paramTypes.length !== 1 || this.data?.paramNames[0] || this.paramTypes[0].rest
-      ? `(${str})`
-      : str
+    let parens = forceParens || this.paramTypes.length !== 1 || this.data?.paramNames[0] || this.paramTypes[0].rest
+    return parens ? `(${str})` : str
   }
 }
 
@@ -690,6 +690,15 @@ class IntersectionType extends Type {
   _isSubtypeOf(type) {
     if (type instanceof GenericType || type instanceof NullType) {
       return false
+    } else if (type instanceof UnionType) {
+      // TODO normalize types like A & (B | C) to (A & B) | (A & C) to hopefully avoid this
+      // have to try it both ways - unfortunate
+      return type.types.some(x => this.isSubtypeOf(x)) // works for `(A & B) ≤ ((A & B) | C)`
+          || this.types.some(x => x.isSubtypeOf(type)) // works for `(A & (B | C)) ≤ ((A & B) | (A & C))`
+    } else if (type instanceof IntersectionType) {
+      // need to do it like this, opposite from `else`.
+      // in cases like `(A & B) ≤ (A & B)`, it works to check `(A & B) ≤ A && (A & B) ≤ B`, but not the other way around
+      return type.types.every(x => this.isSubtypeOf(x))
     } else {
       return this.types.some(x => x.isSubtypeOf(type))
     }

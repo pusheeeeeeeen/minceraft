@@ -322,6 +322,7 @@ function setupDefaults(compiler) {
     },
     {
       length: {
+        // TODO update array length
         type: new ClassType(classes.Integer)
       },
 

@@ -20,8 +20,10 @@ class Environment {
       // re-create expression with correct type
       exprValues = value.values
       if (!isConst) {
-        for (let i in exprValues) {
+        for (let i of Expression.RUNTIME_VALUES) {
           let val = exprValues[i]
+          if (!val) continue
+
           exprValues[i] = {
             ...val,
             options: {

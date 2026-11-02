@@ -573,16 +573,19 @@ class Compiler {
       return "0b"
     })
 
+    let [before, permanent] = expr.asPermanent()
+
     return new Expression(type.returnType, {
       storage: {
         location: compiler.functionReturnLoc,
         options: {
           temporary: true,
           before: concat(
+            before,
             runtimeBefore,
             `data modify ${this.functionArgLoc(true)} set value ${NBT.stringifyInlineStrings(snbt)}`,
             runtimeAfter,
-            ...this.callFunctionExpression(expr)
+            this.callFunctionExpression(permanent)
           )
         }
       }
@@ -1236,8 +1239,6 @@ class Compiler {
       return "0b"
     })
 
-    console.log({ runtimeBefore, snbt, runtimeAfter })
-
     return this.instantiateArrayWithBefore(type, concat(
       runtimeBefore,
       `data modify ${this.tempArrayDataLoc()} set value ${NBT.stringifyInlineStrings(snbt)}`,
@@ -1366,6 +1367,10 @@ class Compiler {
         }
 
         let value = this.compileExpression(rightAst)
+        if (!value.type.isSubtypeOf(target.type)) {
+          throw new error.TypeError(`Cannot assign value of type '${value.type.asString()}' to variable '${target.name}: ${target.type.asString()}'`)
+        }
+
         return value.setSideEffects(value.intoLocation(this.env.getVarLocation(target), true)[0])
       } else if (leftAst.operator === ".") {
         if (leftAst.right.type !== "reference") {
@@ -1385,7 +1390,7 @@ class Compiler {
         }
 
         if (!set?.type.isFunction() || !set.type.isSubtypeOf(
-          this.indexedAssignmentImplType ||= new ClassType(this.lang.Function, false, [target.type, new AnyType(), new AnyType(), new VoidType()])
+          new ClassType(this.lang.Function, false, [target.type, new AnyType(), new AnyType(), new VoidType()])
         )) {
           let detail = set ? `found '${set.type.asNamedString("set")}' instead` : "found no property named 'set'"
           throw new error.TypeError(`Cannot use indexed assignment on type '${target.type.asString()}', as it does not implement 'set(this, K, V): void' (${detail})`)
@@ -1441,8 +1446,12 @@ class Compiler {
       if (value) return value // TODO check static–instance name collisions
 
       // TODO dont replace generics for non-:: function access
-      value = this.getProperty(left, name)
-      return trackThisContext ? [value, left] : value
+      if (trackThisContext) {
+        let [before, permanent] = left.asPermanent()
+        return [this.getProperty(permanent, name).addSideEffects(before, true), permanent]
+      } else {
+        return this.getProperty(left, name)
+      }
     } else if (operator === "[") {
       let get
       try {
@@ -1452,7 +1461,7 @@ class Compiler {
       }
 
       if (!get?.type.isFunction() || !get.type.isSubtypeOf(
-        this.indexedAccessImplType ||= new ClassType(this.lang.Function, false, [left.type, new AnyType(), new AnyType()])
+        new ClassType(this.lang.Function, false, [left.type, new AnyType(), new AnyType()])
       )) {
         let detail = get ? `found '${get.type.asNamedString("get")}' instead` : "found no property named 'get'"
         throw new error.TypeError(`Cannot use indexed access on type '${left.type.asString()}', as it does not implement 'get(this, K): V' (${detail})`)
@@ -1603,7 +1612,7 @@ class Compiler {
 
     let { access, root: { key, shared } } = type.getPropAccessData(name)
 
-    // TODO check property access privilege
+    // TODO check property access
 
     if (target.compileTimeType) {
       let prop = target.values.compileTimeValue.getPropData(name)

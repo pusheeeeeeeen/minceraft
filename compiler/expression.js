@@ -37,6 +37,8 @@ class Expression {
     return new Expression(new VoidType(), { compileTimeValue: Value.null() }, sideEffects)
   }
 
+  static RUNTIME_VALUES = ["score", "storage", "subcommand"]
+
   // TODO refactor (again) to only have one value
   //      with fields: location, compileTimeValue, before, flags: { contained, pure, overridable, temporary }
   //      subcommand format can probably begone or maybe could be encoded as a location?
@@ -78,8 +80,6 @@ class Expression {
     }
   }
 
-  RUNTIME_VALUES = ["score", "storage", "subcommand"]
-
   maybeVoid() {
     return this.type.maybeVoid()
   }
@@ -101,7 +101,7 @@ class Expression {
 
     let values = { compileTimeValue: this.values.compileTimeValue }
 
-    for (let i of this.RUNTIME_VALUES) {
+    for (let i of Expression.RUNTIME_VALUES) {
       let val = this.values[i]
       if (!val) continue
 
@@ -126,7 +126,7 @@ class Expression {
 
     let values = { compileTimeValue: this.values.compileTimeValue }
 
-    for (let i of this.RUNTIME_VALUES) {
+    for (let i of Expression.RUNTIME_VALUES) {
       let val = this.values[i]
       if (!val) continue
 
@@ -155,7 +155,7 @@ class Expression {
   // withoutSideEffects() {
   //   let values = { compileTimeValue: this.values.compileTimeValue }
   //
-  //   for (let i of this.RUNTIME_VALUES) {
+  //   for (let i of Expression.RUNTIME_VALUES) {
   //     let val = this.values[i]
   //     if (!val) continue
   //
@@ -215,7 +215,7 @@ class Expression {
   asPermanent(includeCompileTimeValue = true) {
     let values = {}, before, done = false
 
-    for (let i of this.RUNTIME_VALUES) {
+    for (let i of Expression.RUNTIME_VALUES) {
       let val = this.values[i]
       if (!val || val.options?.temporary) continue
 
