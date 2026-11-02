@@ -396,6 +396,14 @@ class GenericType extends Type {
     return "$" + compiler.id.anonGeneric()
   }
 
+  // displays the generic with 'extends' clause
+  static asDefinitionString(generic) {
+    let str = generic.name
+    if (generic.explicitExtends) str += ` extends ${generic.extends.asString(true, true)}`
+    // if (generic.explicitDefault) str += ` = ${generic.default.asString(true, true)}`
+    return str
+  }
+
   // TODO cache?
 
   constructor(generic, nullable = false) {
@@ -472,12 +480,8 @@ class GenericType extends Type {
     return `${this.generic.name}${showNullable && this.hasNullableModifier ? "?" : ""}`
   }
 
-  // displays the generic with 'extends' clause
   asDefinitionString() {
-    let str = this.generic.name
-    if (this.generic.explicitExtends) str += ` extends ${this.extends.asString(true, true)}`
-    // if (this.generic.explicitDefault) str += ` = ${this.default.asString(true, true)}`
-    return str
+    return GenericType.asDefinitionString(this.generic)
   }
 }
 

@@ -249,10 +249,15 @@ class Compiler {
       }
 
       let generic = expandedGenerics[i + (seenRest ? restOffset : 0)]
-      if (generic?.variadicSpread) {
+      if (!generic) return target.default
+
+      if (generic.variadicSpread) {
         throw new error.TypeDefinitionError(`Spread generic of indeterminate length '...${generic.type.asString()}' must align with ...rest generic`)
       }
-      return generic || target.default
+      if (!generic.isSubtypeOf(target.extends)) {
+        throw new error.TypeDefinitionError(`Type '${generic.asString()}' is not assignable to generic '${GenericType.asDefinitionString(target)}'`)
+      }
+      return generic
     })
   }
 
