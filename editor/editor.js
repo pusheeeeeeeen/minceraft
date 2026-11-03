@@ -140,8 +140,6 @@ input.oninput = () => {
   compiled = null
 }
 
-let projectName = "TEST"
-
 id("compile").onclick = compile
 id("download").onclick = download
 
@@ -159,7 +157,7 @@ function compile() {
   let code = input.value
 
   try {
-    compiled = new Compiler(code, projectName).run()
+    compiled = new Compiler(code, currentFile || "unnamed").run()
   } catch (e) {
     if (e instanceof BaseError) {
       consoleError(e.constructor.name, e.message)

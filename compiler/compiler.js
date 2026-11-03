@@ -50,7 +50,7 @@ class Compiler {
   run() {
     compiler = this
 
-    let name = this.name.replace(/\W/g, "").toLowerCase(),
+    let name = this.name.replace(/\W+/g, "_").toLowerCase(),
         namespace = `zzz_compiled_${name}`
 
     /*
