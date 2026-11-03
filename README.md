@@ -10,7 +10,7 @@ This is a **compiler from a custom programming language to Minecraft commands**.
 
 The parser first splits the file into tokens like numbers or keywords, and filters out whitespace and comments (see [lexer.js](compiler/lexer.js)). Next, the parser generates an AST from the tokens using _recursive descent parsing_ (see [parser.js](compiler/parser.js)).
 
-Expressions are parsed by first gathering all operators and “leaf expressions” (expressions without any operators) into a list. Then, that list is iteratively merged into a tree by finding operators that have a higher precedence than the ones on either side, and replacing that segment of the list with a single node. For example: `A + B * C` → `A + (B*C)` → `(A+(B+C))`. The same process handles unary operators: `- A . B + C` → `- (A.B) + C` → `(-(A.B)) + C` → `((-(A.B))+C)`. Function calls (`f(...)`) and indexing (`a[...]`) are considered postfix operators with extra data for the arguments or index.
+Expressions are parsed by first gathering all operators and “leaf expressions” (expressions without any operators) into a list. Then, that list is iteratively merged into a tree by finding operators that have a higher precedence than the ones on either side, and replacing that segment of the list with a single node. For example: `A + B * C` → `A + (B*C)` → `(A+(B*C))`. The same process handles unary operators: `- A . B + C` → `- (A.B) + C` → `(-(A.B)) + C` → `((-(A.B))+C)`. Function calls (`f(...)`) and indexing (`a[...]`) are considered postfix operators with extra data for the arguments or index.
 
 ### Type checking
 
